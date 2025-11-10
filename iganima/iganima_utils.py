@@ -208,7 +208,7 @@ def attach_distance_dict(station_dict, event):
     :returns python dict with distance parameter
     """
     
-    distance=gps2dist_azimuth(station_dict["latitude"],station_dict["longitude"] \
+    distance = gps2dist_azimuth(station_dict["latitude"],station_dict["longitude"] \
                               , event.preferred_origin().latitude, event.preferred_origin().longitude)
     
     station_dict['distance']=distance[0]

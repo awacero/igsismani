@@ -1,7 +1,6 @@
 
 import pandas as pd
 import numpy as np
-
 import logging
 import logging.config
 import argparse 
@@ -10,7 +9,6 @@ import configparser
 from iganima import iganima_utils as u
 from iganima.iganima_functions import *
 from iganima import get_circle_color
-
 
 import json
 from obspy import read_inventory
@@ -70,7 +68,6 @@ def configure_logging():
 def main(args):
 
     try:
-
         configuration_file = args.iganima_config
         event_id = args.event_id
     except Exception as e:
@@ -112,15 +109,14 @@ def main(args):
         logger.info(f"Read miniseed server file {mseed_server_config_file}")
         ###mseed_server_param = u.read_config_file(mseed_server_config_file)
         mseed_server_param = load_config_from_file(mseed_server_config_file)
-
         print(f"##### mseed server {mseed_server_param}")
+
     except Exception as e:
         logger.error(f"Error reading configuration file: {e}")
         raise Exception(f"Error reading configuration file: {e}")
 
     try:
         logger.info(f"Get fdsn server info ")
-        
         fdsn_server_ip = mseed_server_param[fdsn_id]["server_ip"]
         fdsn_server_port = mseed_server_param[fdsn_id]["port"]
 
@@ -157,7 +153,7 @@ def main(args):
         # Parámetros del evento
         event_latitude = event_dict['latitude']
         event_longitude = event_dict['longitude']
-        intensity = event_dict['magnitude']
+        magnitude_value = event_dict['magnitude']
     except Exception as e:
         logger.error(f"Error getting event info {e}")
         raise Exception(f"Error getting event info: {e}")
@@ -199,12 +195,12 @@ def main(args):
 
     try:
         logger.info(f"Create the animation")
-        text_magnitude = [f'{intensity}']
-        circle_colors = get_circle_color.get_colors_from_intensity(intensity)
-        sinewave_color = get_circle_color.get_color_from_intensity(intensity)
+        text_magnitude = [f'{magnitude_value}']
+        circle_colors = get_circle_color.get_colors_from_intensity(magnitude_value)
+        sinewave_color = get_circle_color.get_color_from_intensity(magnitude_value)
 
         # Configuración de la onda sísmica
-        vertical_scale = get_circle_color.get_value_from_intensity(intensity)
+        vertical_scale = get_circle_color.get_value_from_intensity(magnitude_value)
         horizontal_scale = 0.3
         seismic_wave_time = np.linspace(-1, 1, 100)
         lon_total = np.linspace(event_longitude - horizontal_scale, event_longitude + horizontal_scale, len(seismic_wave_time))
