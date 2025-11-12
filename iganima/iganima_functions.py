@@ -13,10 +13,12 @@ import glob
 import iganima_utils as u
 
 
-def clean_frame_directory(frame_dir):
+def clean_frames_directory(frame_dir):
     """Limpia el directorio de frames o lo crea si no existe."""
+
     if os.path.exists(frame_dir):
         for f in glob.glob(os.path.join(frame_dir, "frame*.png")):
+
             os.remove(f)
     else:
         os.makedirs(frame_dir)
@@ -38,7 +40,7 @@ def generate_circle(lat, lon, radius, points=100):
         lon_circle.append(lon + radius * np.cos(i))
     return lat_circle, lon_circle
 
-def create_initial_point_frame(event_longitude, event_latitude, lon_stations, lat_stations, station_name_list_ordered):
+def create_initial_point_frame(event_longitude, event_latitude):
     """Crea el frame inicial con solo un punto."""
     frame_data = [
         go.Scattermapbox(
@@ -48,16 +50,6 @@ def create_initial_point_frame(event_longitude, event_latitude, lon_stations, la
             marker=dict(size=6, color='green'),
             showlegend=False,
             hoverinfo='skip'
-        ),
-        go.Scattermapbox(
-            lon=lon_stations,
-            lat=lat_stations,
-            text=station_name_list_ordered,
-            mode="markers+text",
-            marker=dict(color=[], size=4, symbol="circle"),
-            textposition='top left',
-            showlegend=False,
-            hoverinfo='text'
         )
     ]
     return frame_data
@@ -226,7 +218,8 @@ def save_frame(fig, frame_name, mapbox_access_token, event_latitude, event_longi
             accesstoken=mapbox_access_token,
             center=dict(lat=event_latitude, lon=event_longitude),
             zoom=zoom_level,
-            style='light'
+            #style='light'
+            style="outdoors"
         ),
         images=[dict(
             source="https://raw.githubusercontent.com/awacero/grafana_plotly/main/images/logo_igepn.png",
@@ -239,24 +232,10 @@ def save_frame(fig, frame_name, mapbox_access_token, event_latitude, event_longi
             sizing="contain",
             opacity=1.0,
         )],
-        annotations=[
-            dict(
-                xref="paper",
-                yref="paper",
-                x=1,
-                y=1,
-                text=event_annotation,
-                showarrow=False,
-                font=dict(size=14, color="black"),
-                bgcolor="white",
-                bordercolor="black",
-                borderwidth=2,
-                borderpad=4,
-                opacity=0.7
-            )
-        ],
+        
+        
         margin=dict(l=10, r=10, t=10, b=10),
-        width=666,
-        height=666
+        width=720,
+        height=640
     )
     fig.write_image(frame_name)

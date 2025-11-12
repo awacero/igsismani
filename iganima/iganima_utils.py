@@ -368,6 +368,7 @@ def event2dict(event_object):
     event_d["author"] = origin.creation_info.author
     event_d["event_id"] = event_object.resource_id.id.split("/")[2]
 
+
     try:
         event_d["status"] = origin.evaluation_status
     except:
@@ -376,7 +377,8 @@ def event2dict(event_object):
         
     event_d["status"] = status(event_d['status'])
     event_d["time_local"] = get_local_datetime(event_d['datetime']).strftime('%Y-%m-%d %H:%M:%S')
-
+    event_d["local_date"] = event_d["time_local"].split(" ")[0]
+    event_d["local_time"] = event_d["time_local"].split(" ")[1]
 
     return event_d
 
