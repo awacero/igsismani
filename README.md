@@ -7,13 +7,15 @@ The following sections describe how to install, configure and execute the code.
 
 ## Prerequisites
 
-* **Python** 3.13.
-* **OpenCV** 
+### Libraries
+* **Python** 3.11
 * **Plotly**
+* **Manim**
+* **OpenCV** 
+* **Obspy**
 
+### Data
 
-* **FFmpeg** for encoding GIF/MP4 files (required by MoviePy and Manim).
-* **Cairo/Pango** stack recommended by [Manim's installation guide](https://docs.manim.community/en/stable/installation.html) for video rendering.
 * A **Mapbox access token** to render Mapbox tiles inside Plotly figures.
 * Access credentials to an **FDSN web service** that provides seismic events and waveforms.
 
@@ -22,9 +24,9 @@ The following sections describe how to install, configure and execute the code.
 1. Create and activate a conda environment:
 
    ```bash
-    conda create -n igsismani python=3.13
+    conda create -n igsismani python=3.11
     conda activate igsismani
-    conda install obspy plotly manim 
+    conda install manim plotly opencv obspy 
    ```
 
 
@@ -83,9 +85,11 @@ The modules use a standard logging configuration file if you want customized log
 This script reproduces the original animation with the default overlay.
 
 ```bash
+conda activate igsismani 
+
 python run_igsismani.py --iganima_config ./config/iganima.cfg --event_id igepn2023dcsb
 ```
 
-The frames are exported to the directory configured in `[animation] frames_map and frames_info`, and the resulting MP4 videos on `video_out`
+The frames are stored in a temporary directory and the resulting MP4 videos on `video_out`
 
 
