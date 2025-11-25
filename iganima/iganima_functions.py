@@ -17,7 +17,7 @@ def clean_frames_directory(frame_dir):
     """Limpia el directorio de frames o lo crea si no existe."""
 
     if os.path.exists(frame_dir):
-        for f in glob.glob(os.path.join(frame_dir, "frame*.png")):
+        for f in glob.glob(os.path.join(frame_dir, "*.png")):
 
             os.remove(f)
     else:

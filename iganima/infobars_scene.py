@@ -17,6 +17,19 @@ class InfoBarsScene(Scene):
 
         os.makedirs(output_dir, exist_ok=True)
 
+    def make_bar_large(self, height, color, text_str, font_size):
+        bar = RoundedRectangle(
+            width=1,
+            height=height,
+            fill_color=color,
+            fill_opacity=1,
+            corner_radius=0.15,
+            stroke_width=0
+        )
+        text = Text(text_str, color=WHITE, font_size=font_size).move_to(bar.get_center())
+        return bar, text
+
+
     def make_bar(self, height, color, text_str, font_size):
         bar = RoundedRectangle(
             width=0.01,
@@ -29,6 +42,8 @@ class InfoBarsScene(Scene):
         text = Text(text_str, color=WHITE, font_size=font_size).move_to(bar.get_center())
         return bar, text
 
+
+
     def construct(self):
 
     
@@ -40,7 +55,7 @@ class InfoBarsScene(Scene):
         # Fondo blanco
         background = Rectangle(
             width=config.frame_width,
-            height=config.frame_height * 1.5,
+            height=config.frame_height * 1.1,
             fill_color=WHITE,
             fill_opacity=1,
             stroke_width=0
@@ -48,11 +63,11 @@ class InfoBarsScene(Scene):
         self.add(background)
 
         # Crear barras y textos
-        bar_magnitude, text_magnitude = self.make_bar(1.1, blue_light, f"Magnitud {info['magnitude']}", 56)
+        bar_magnitude, text_magnitude = self.make_bar_large(1.1, blue_light, f"Magnitud {info['magnitude']}", 56)
         bar_depth, text_depth = self.make_bar(1.1, blue_dark, f"{info['depth']} Km. de profundidad", 46)
-        bar_location, text_location = self.make_bar(1.1, blue_light, f"a : {info['distance']} Km. de  {info['city']}", 56)
+        bar_location, text_location = self.make_bar_large(1.1, blue_light, f"a : {info['distance']} Km. de  {info['city']}", 56)
         bar_province, text_province = self.make_bar(1.1, blue_dark, f"Provincia: {info['province']}", 46)
-        bar_date, text_date = self.make_bar(1.1, blue_light, f"Fecha: {info['local_date']}", 56)
+        bar_date, text_date = self.make_bar_large(1.1, blue_light, f"Fecha: {info['local_date']}", 56)
         bar_time, text_time = self.make_bar(1.1, blue_dark, f"Hora: {info['local_time']}", 46)
 
         bars = VGroup(bar_magnitude, bar_depth, bar_location, bar_province, bar_date, bar_time).arrange(DOWN, buff=0.05)
@@ -65,9 +80,14 @@ class InfoBarsScene(Scene):
 
         # Animación: crecimiento progresivo
         target_widths = [8, 6, 8, 6, 8, 6]
+        animate_masks = [False,True, False, True,False,True]
         for i in range(N):
             for idx, bar in enumerate(bars):
-                w = 0.1 + (target_widths[idx] - 0.1) * (i + 1) / N
+                if animate_masks[idx]:
+                    w = 0.1 + (target_widths[idx] - 0.1) * (i + 1) / N
+                else:
+                    w = target_widths[idx]
+
                 bar_new = RoundedRectangle(
                     width=w,
                     height=bar.height,
@@ -86,6 +106,10 @@ class InfoBarsScene(Scene):
 
     def generate_frames(self):
         """Configura parámetros y ejecuta el renderizado."""
+
+        config.background_color = WHITE
+        config.pixel_width = 720
+        #config.pixel_height = 640
 
         config.preview = False
         config.save_last_frame = False

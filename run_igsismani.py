@@ -195,15 +195,13 @@ def main(args):
         event_dict ['province'] = '--'
 
 
-
+    """Create map section"""
     try:
         logger.info(f"Create the map animation")
         # TRY DO IT IN PARALLEL 
         frame_names = []
         for t in range(0, FRAMES_NUMBER ):
-
             frame_data = create_initial_point_frame(event_longitude, event_latitude)
-
             # Guardar el frame
             frame_name = f'{frames_map}/map_{t:03}.png'
             frame_names.append(frame_name)
@@ -222,6 +220,7 @@ def main(args):
         raise Exception(f"Error while creating the map frames: {e}")
 
 
+    """Create information part"""
     try:
         logger.info("Create info frames")
         from iganima.infobars_scene import InfoBarsScene
