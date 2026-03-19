@@ -1,0 +1,44 @@
+@startuml
+package "Cliente" {
+    [Usuario]
+}
+
+package "IGSISMANI API" {
+    [FastAPI Endpoint]
+    [Background Task Manager]
+}
+
+package "Módulos Internos" {
+    [Módulo Autenticación]
+    [Módulo FDSN]
+    [Módulo Animación]
+    [Módulo Video Export]
+    [Módulo Envío de Correo]
+    [Módulo Repositorio]
+}
+
+package "Sistema de Archivos" {
+    [tmp/]
+    [logs/]
+    [config/]
+}
+
+package "Servicios Externos" {
+    [FDSN Web Services]
+    [SMTP Server]
+    [SharePoint/Repositorio]
+}
+
+[Usuario] --> [FastAPI Endpoint] : POST /generate
+[FastAPI Endpoint] --> [Background Task Manager]
+[Background Task Manager] --> [Módulo Autenticación]
+[Background Task Manager] --> [Módulo FDSN]
+[Background Task Manager] --> [Módulo Animación]
+[Background Task Manager] --> [Módulo Video Export]
+[Background Task Manager] --> [Módulo Envío de Correo]
+[Módulo Video Export] --> [tmp/]
+[Módulo Envío de Correo] --> [SMTP Server]
+[Módulo FDSN] --> [FDSN Web Services]
+[Módulo Repositorio] --> [SharePoint/Repositorio]
+
+@enduml

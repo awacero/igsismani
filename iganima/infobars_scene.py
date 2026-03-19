@@ -65,8 +65,8 @@ class InfoBarsScene(Scene):
         # Crear barras y textos
         bar_magnitude, text_magnitude = self.make_bar_large(1.1, blue_light, f"Magnitud {info['magnitude']}", 56)
         bar_depth, text_depth = self.make_bar(1.1, blue_dark, f"{info['depth']} Km. de profundidad", 46)
-        bar_location, text_location = self.make_bar_large(1.1, blue_light, f"a : {info['distance']} Km. de  {info['city']}", 56)
-        bar_province, text_province = self.make_bar(1.1, blue_dark, f"Provincia: {info['province']}", 46)
+        bar_location, text_location = self.make_bar_large(1.1, blue_light, f"a {info['distance']} Km. de  {info['city']}", 56)
+        bar_province, text_province = self.make_bar(1.1, blue_dark, f"{info['province']}", 46)
         bar_date, text_date = self.make_bar_large(1.1, blue_light, f"Fecha: {info['local_date']}", 56)
         bar_time, text_time = self.make_bar(1.1, blue_dark, f"Hora: {info['local_time']}", 46)
 

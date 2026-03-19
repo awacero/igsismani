@@ -1,0 +1,34 @@
+@startuml
+actor Usuario
+participant "FastAPI" as API
+participant "Background Task" as BG
+participant "Módulo FDSN" as FDSN
+participant "Módulo Animación" as ANI
+participant "Video Export" as VID
+participant "SMTP" as SMTP
+participant "tmp/" as TMP
+
+Usuario -> API : POST /generate\n(event_id,user,pass)
+API -> API : validar credenciales
+API -> TMP : crear carpeta ticket_id
+API -> BG : iniciar tarea asincrónica
+API <-- Usuario : ticket_id
+
+loop Progreso
+    Usuario -> API : GET /status/{ticket_id}
+    API -> TMP : leer status.json
+    API --> Usuario : estado
+end
+
+BG -> FDSN : obtener datos sísmicos
+BG -> ANI : generar animación
+BG -> VID : componer video
+VID -> TMP : guardar video.mp4
+BG -> SMTP : enviar correo con video
+BG -> TMP : actualizar status.json
+
+Usuario -> API : GET /download/{ticket_id}
+API -> TMP : servir video.mp4
+API --> Usuario : archivo
+
+@enduml

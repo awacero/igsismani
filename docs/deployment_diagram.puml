@@ -1,0 +1,26 @@
+@startuml
+node "Servidor Local IGEPN" {
+    component "FastAPI Service" {
+        artifact "main.py"
+    }
+    component "Background Worker"
+    folder "igsismani/" {
+        folder "iganima/"
+        folder "config/"
+        folder "tmp/"
+        folder "logs/"
+    }
+}
+
+node "Servicios Externos" {
+    node "FDSN"
+    node "SMTP"
+    node "SharePoint"
+}
+
+"FastAPI Service" --> "Background Worker"
+"Background Worker" --> "FDSN"
+"Background Worker" --> "SMTP"
+"Background Worker" --> "SharePoint"
+
+@enduml

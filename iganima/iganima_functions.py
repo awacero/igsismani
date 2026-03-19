@@ -174,6 +174,9 @@ def create_circle_frames(t, SEISMIC_WAVE_GROW, SEISMIC_WAVE_SHRINK, event_latitu
     ])
     return frame_data
 
+
+
+
 def save_frame(fig, frame_name, mapbox_access_token, event_latitude, event_longitude, event_annotation, zoom_level):
     """Guarda un frame como imagen PNG."""
 

@@ -111,6 +111,8 @@ def main(args):
         FPS = int(run_param["animation"]["fps"])
         number_stations = run_param["animation"]["number_stations"]
         frames_out = run_param["animation"]["frames_out"]
+        frames_in = run_param["animation"]["frames_in"]
+        video_out = run_param["animation"]["video_out"]
 
         # Nuevo: número de frames para la intro de columnas (opción A).
         # Si no está definido en el ini, se toma ~1/3 del total, mínimo 5.
@@ -200,12 +202,39 @@ def main(args):
     # 1. Crear frames del mapa
     try:
         logger.info(f"Create the map animation")
+
+        from iganima import iganima_functions
+
+        colors_list = ['red','red','red']
+        radius_list = [FRAMES_NUMBER*0.1, FRAMES_NUMBER*0.07, FRAMES_NUMBER*0.05]
+        scale_list = [0.1, 0.07, 0.05]
+        circle_zip = zip(colors_list,radius_list)
+
+        for color,radius in circle_zip:
+            lat_circle,lon_circle = generate_circle(event_latitude,event_longitude, radius)
+            
+
         # TRY DO IT IN PARALLEL 
         frame_names = []
         for t in range(0, FRAMES_NUMBER):
-
             frame_data = create_initial_point_frame(event_longitude, event_latitude)
 
+            # ondas crecientes
+            for color, scale in zip(colors_list, scale_list):
+                radius = t * scale
+                lat_circ, lon_circ = generate_circle(event_latitude, event_longitude, radius)
+
+                frame_data.append(
+                    go.Scattermapbox(
+                        lon=lon_circ,
+                        lat=lat_circ,
+                        mode="lines",
+                        line=dict(width=2, color=color),
+                        showlegend=False,
+                    )
+                )
+
+  
             # Guardar el frame
             frame_name = f'{frames_out}/map_{t:03}.png'
             frame_names.append(frame_name)
@@ -257,9 +286,6 @@ def main(args):
         info_height = info_sample.height
         combined_height = map_height + info_height
 
-        print("HOLIIIII")
-        print(map_height, info_height)
-
         map_sample.close()
         info_sample.close()
 
@@ -268,9 +294,9 @@ def main(args):
 
         # Colores de las columnas (aprox)
         azul_oscuro = (46, 95, 168)
-        azul_claro = (43, 168, 160)
+        rojo_quemado = (128, 0, 32)
         blanco = (255, 255, 255)
-        colors = [azul_oscuro, azul_claro, blanco]
+        colors = [azul_oscuro, rojo_quemado, blanco]
 
         for i in range(total_frames):
 
@@ -326,15 +352,28 @@ def main(args):
             size = (width, height)
             frame_array.append(img)
 
+        outro_img = cv2.imread(f"{frames_in}/outro.igepn.png")
+        outro_img = cv2.resize(outro_img,(size[0],size[1]))
+
+        for _ in range(3):
+            frame_array.append(outro_img)
+
+        outro_img = cv2.imread(f"{frames_in}/doc_anuncio_1.png")
+        outro_img = cv2.resize(outro_img,(size[0],size[1]))
+
+        for _ in range(3):
+            frame_array.append(outro_img)
+
         logger.info("Create video using opencv")
         out = cv2.VideoWriter(
-            f'{event_dict["event_id"]}.mp4',
+            f'{video_out}/{event_dict["event_id"]}.mp4',
             cv2.VideoWriter_fourcc(*'avc1'),
             FPS,  # fps
             size,
         )
 
         for frame in frame_array:
+            #print(frame)
             out.write(frame)
         out.release()
 
