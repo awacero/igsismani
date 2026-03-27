@@ -189,9 +189,9 @@ def main(args):
 
         response = requests.get(f"{nearest_url}", params=parameters)
         response.raise_for_status()
-        event_dict['distance'], event_dict['city'], event_dict['province'] = eval(
-            response.text.strip()
-        )
+        event_dict['distance'], event_dict['city'], event_dict['province'] = eval(response.text.strip()        )
+
+        event_dict['distance'] = round(event_dict['distance'], 1)
 
     except Exception as e:
         logger.error(f"Error getting event nearest {e}.Filling with emptiness")
@@ -352,16 +352,27 @@ def main(args):
             size = (width, height)
             frame_array.append(img)
 
+            
+            
+        
+        ##Keep information displayed for 3 segoncds 
+        hold_frames = FPS * 3
+        if frame_array:
+            last_frame = frame_array[-1].copy()
+            for _ in range(hold_frames):
+                frame_array.append(last_frame.copy())
+
+
         outro_img = cv2.imread(f"{frames_in}/outro.igepn.png")
         outro_img = cv2.resize(outro_img,(size[0],size[1]))
 
-        for _ in range(3):
+        for _ in range(FPS *2):
             frame_array.append(outro_img)
 
         outro_img = cv2.imread(f"{frames_in}/doc_anuncio_1.png")
         outro_img = cv2.resize(outro_img,(size[0],size[1]))
 
-        for _ in range(3):
+        for _ in range(FPS*2):
             frame_array.append(outro_img)
 
         logger.info("Create video using opencv")

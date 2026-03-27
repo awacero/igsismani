@@ -79,7 +79,7 @@ class InfoBarsScene(Scene):
         self.add(bars, texts)
 
         # Animación: crecimiento progresivo
-        target_widths = [8, 6, 8, 6, 8, 6]
+        target_widths = [8, 10, 10, 6, 8, 6]
         animate_masks = [False,True, False, True,False,True]
         for i in range(N):
             for idx, bar in enumerate(bars):

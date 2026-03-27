@@ -360,7 +360,7 @@ def event2dict(event_object):
 
     event_d={}
     origin = event_object.preferred_origin() or event_object.origins[0]
-    event_d['magnitude'] = round(event_object.preferred_magnitude().mag,2)
+    event_d['magnitude'] = round(event_object.preferred_magnitude().mag,1)
     event_d['latitude'] = round(origin.latitude,4)
     event_d['longitude'] = round(origin.longitude,4)
     event_d['depth'] = round(origin.depth/1000,1)
