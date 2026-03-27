@@ -46,12 +46,14 @@ nearest_url = http://DARCY.PEMBERLEY:1775/get_nearest_city?
 nearest_token = mgoolilf
 
 [animation]
-mapbox_access_token = TOKEN_MAPBOX_
-frames_map = $HOME/igsismani/frames_map
-frames_info = $HOME/igsismani/frames_info
+mapbox_access_token = TOKEN_MAPBOX
+frames_out = PROJECT_PATH/igsismani/tmp/frames_out
+frames_in = PROJECT_PATH/igsismani/config/
+video_out = PROJECT_PATH/igsismani/tmp/
 frames_number = 20
-fps= 4
+fps= 3
 number_stations = 10
+
 
 ```
 
@@ -61,10 +63,12 @@ number_stations = 10
 
 ```json
 {
-  "igepn": {
-    "server_ip": "fdsn.example.org",
-    "port": 8080
+  "FDSN":{
+          "name":"FDSN",
+          "server_ip":"0.0.0.0",
+          "port":"8080"
   }
+
 }
 ```
 
@@ -93,3 +97,23 @@ python run_igsismani.py --iganima_config ./config/iganima.cfg --event_id igepn20
 The frames are stored in a temporary directory and the resulting MP4 videos on `video_out`
 
 
+### 2. Ejecutar el servicio 
+
+```bash 
+conda activate igsismani
+
+$ python run_api_service.py  
+
+
+```
+
+#### 2.1 Arrancar la creación de un evento 
+
+```javascript
+curl http://192.168.1.180:8000/tickets?event_id=igepn2026dzcr 
+
+```
+
+### 3. Create the video going to the following  web 
+
+http://192.168.1.180:8000/ui

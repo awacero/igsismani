@@ -375,3 +375,40 @@ def start_video_job(
 
     threading.Thread(target=_worker, daemon=True).start()
     return ticket_id
+
+
+def resolve_ticket_video_path(*, ticket_id: str, tickets_dir: Path, artifacts_dir: Path) -> Path:
+    """
+    Resolve and validate the final MP4 path for a given ticket_id.
+
+    Expects:
+      tickets_dir/<ticket_id>/status.json contains:
+        - status == "done"
+        - output_file: relative path under artifacts_dir (e.g. "events/<event_id>/<event_id>-3.mp4")
+    """
+    artifacts_dir = artifacts_dir.resolve()
+    status_path = _ticket_status_path(tickets_dir, ticket_id)
+
+    if not status_path.exists():
+        raise FileNotFoundError("ticket not found")
+
+    status = _read_json(status_path)
+    if status.get("status") != "done":
+        raise RuntimeError(f"ticket not ready: {status.get('status')}")
+
+    rel = status.get("output_file")
+    if not rel:
+        raise FileNotFoundError("ticket has no output_file")
+
+    video_path = (artifacts_dir / rel).resolve()
+
+    # Safety: ensure the resolved path stays under artifacts_dir (prevents path traversal)
+    try:
+        video_path.relative_to(artifacts_dir)
+    except ValueError as e:
+        raise PermissionError("invalid output path") from e
+
+    if not video_path.exists() or not video_path.is_file():
+        raise FileNotFoundError("video file not found on disk")
+
+    return video_path

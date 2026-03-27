@@ -1,0 +1,26 @@
+{        "ARCLINK":{
+                "name":"ARCLINK",
+                "user":"aaa",
+                "server_ip":"0.0.0.0",
+                "port":"18001"
+        },
+
+        "FDSN":{
+                "name":"FDSN",
+                "server_ip":"0.0.0.0",
+                "port":"8080"
+        },
+
+
+        "SEEDLINK":{
+                "name":"SEEDLINK",
+                "server_ip":"0.0.0.0",
+                "port":"18000"
+        },
+        "ARCHIVE":{
+                "name":"ARCHIVE",
+                "archive_path":"/PATH_TO_SCP_DATA"
+        }
+
+}
+
