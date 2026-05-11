@@ -9,13 +9,15 @@ class InfoBarsScene(Scene):
     usando Manim. Guarda los frames como imágenes PNG.
     """
 
-    def __init__(self, event_info, output_dir="frames_info", n_frames=20, **kwargs):
+    def __init__(self, event_info, output_dir="frames_out", n_frames=20, input_dir="frames_in", **kwargs):
         super().__init__(**kwargs)
         self.event_info = event_info
         self.output_dir = output_dir
         self.n_frames = n_frames
-
+        self.input_dir = input_dir
         os.makedirs(output_dir, exist_ok=True)
+        os.makedirs(input_dir, exist_ok=True)
+
 
     def make_bar_large(self, height, color, text_str, font_size):
         bar = RoundedRectangle(
@@ -53,6 +55,7 @@ class InfoBarsScene(Scene):
         N = self.n_frames
 
         # Fondo blanco
+        """
         background = Rectangle(
             width=config.frame_width,
             height=config.frame_height * 1.1,
@@ -60,6 +63,17 @@ class InfoBarsScene(Scene):
             fill_opacity=1,
             stroke_width=0
         )
+        """         
+        background = ImageMobject(f"{self.input_dir}/background.jpeg")
+
+        scale_w = config.frame_width / background.width
+        scale_h = config.frame_height / background.height
+        scale = max(scale_w, scale_h)
+        background.scale(scale)
+        #background.scale_to_fit_width(config.frame_width)
+        #background.scale_to_fit_height(config.frame_height)
+        background.move_to(ORIGIN)
+
         self.add(background)
 
         # Crear barras y textos

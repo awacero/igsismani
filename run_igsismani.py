@@ -21,9 +21,64 @@ import cv2
 from manim import config
 import shutil
 
+from moviepy.editor import VideoFileClip, AudioFileClip, afx
+
 pd.set_option('display.max_colwidth', None)
 pd.set_option('display.max_columns', None)
 
+
+def resize_with_padding(frame, target_size, background_color=(255, 255, 255)):
+    """
+    Resize a frame keeping its aspect ratio and add padding
+    to fit the target video size.
+
+    Parameters
+    ----------
+    frame : np.ndarray
+        Input image/frame in BGR format.
+    target_size : tuple
+        Target size as (width, height).
+    background_color : tuple
+        Background color in BGR format.
+
+    Returns
+    -------
+    np.ndarray
+        Frame resized with padding.
+    """
+
+    target_width, target_height = target_size
+    original_height, original_width = frame.shape[:2]
+
+    scale = min(
+        target_width / original_width,
+        target_height / original_height
+    )
+
+    new_width = int(original_width * scale)
+    new_height = int(original_height * scale)
+
+    resized_frame = cv2.resize(
+        frame,
+        (new_width, new_height),
+        interpolation=cv2.INTER_AREA
+    )
+
+    canvas = np.full(
+        (target_height, target_width, 3),
+        background_color,
+        dtype=np.uint8
+    )
+
+    x_offset = (target_width - new_width) // 2
+    y_offset = (target_height - new_height) // 2
+
+    canvas[
+        y_offset:y_offset + new_height,
+        x_offset:x_offset + new_width
+    ] = resized_frame
+
+    return canvas
 
 def read_parameters(file_path):
     """
@@ -262,7 +317,7 @@ def main(args):
         logger.info("Create info frames")
         from iganima.infobars_scene import InfoBarsScene
 
-        scene = InfoBarsScene(event_dict, output_dir=frames_out, n_frames=FRAMES_NUMBER)
+        scene = InfoBarsScene(event_dict, output_dir=frames_out, n_frames=FRAMES_NUMBER, input_dir=frames_in)
         scene.generate_frames()
 
     except Exception as e:
@@ -295,8 +350,10 @@ def main(args):
         # Colores de las columnas (aprox)
         azul_oscuro = (46, 95, 168)
         rojo_quemado = (128, 0, 32)
+        azul_oscuro =(3,13,69)
+        azul_claro = (12,79,158)
         blanco = (255, 255, 255)
-        colors = [azul_oscuro, rojo_quemado, blanco]
+        colors = [azul_oscuro, azul_claro, blanco]
 
         for i in range(total_frames):
 
@@ -344,16 +401,116 @@ def main(args):
         # 4. Crear el video final a partir de los frames combinados
         logger.info("Create video from frames_combined")
         logger.info("Fusion columns intro + map + info")
+
         frame_array = []
 
+        logger.info("Create video using opencv")
+
+        # Ruta del video corto que quieres anexar
+        outro_video_path = f"{frames_in}/outro_xs.mp4"
+
+        # Leer primer frame para obtener size
+        first_frame_path = f"{frames_out}/frame_000.png"
+        first_frame = cv2.imread(first_frame_path)
+
+        if first_frame is None:
+            raise FileNotFoundError(f"Could not read first frame: {first_frame_path}")
+
+        height, width, layers = first_frame.shape
+        size = (width, height)
+
+        out = cv2.VideoWriter(
+            f'{video_out}/{event_dict["event_id"]}.mp4',
+            cv2.VideoWriter_fourcc(*'avc1'),
+            FPS,
+            size,
+        )
+
+        # 1. Escribir los frames principales
+        last_frame = None
+
+        for i in range(total_frames):
+            frame_path = f"{frames_out}/frame_{i:03}.png"
+            img = cv2.imread(frame_path)
+
+            if img is None:
+                raise FileNotFoundError(f"Could not read frame: {frame_path}")
+
+            img = cv2.resize(img, size)
+            out.write(img)
+            last_frame = img.copy()
+
+        # 2. Mantener el último frame durante 3 segundos
+        hold_frames = FPS * 3
+
+        if last_frame is not None:
+            for _ in range(hold_frames):
+                out.write(last_frame)
+
+        # 3. Anexar video corto al final
+        outro_skip_seconds = 3
+        outro_skip_frames = int(outro_skip_seconds*FPS)
+
+        cap = cv2.VideoCapture(outro_video_path)
+
+        if not cap.isOpened():
+            raise FileNotFoundError(f"Could not open outro video: {outro_video_path}")
+
+        frame_counter = 0
+        while True:
+            ret, outro_frame = cap.read()
+
+            if not ret:
+                break
+
+            if frame_counter < outro_skip_frames:
+                frame_counter +=1
+                continue
+            #outro_frame = cv2.resize(outro_frame, size)
+            outro_frame = resize_with_padding(outro_frame, size)
+            out.write(outro_frame)
+            frame_counter +=1
+
+        cap.release()
+        out.release()
+
+        silent_video_path = f'{video_out}/{event_dict["event_id"]}.mp4'
+        final_video_path = f'{video_out}/{event_dict["event_id"]}_audio.mp4'
+        audio_path = f"{frames_in}/backsound.mp3"
+
+        logger.info("Adding background audio using MoviePy")
+
+        video_clip = VideoFileClip(silent_video_path)
+        audio_clip = AudioFileClip(audio_path)
+
+        audio_loop = afx.audio_loop(
+            audio_clip,
+            duration=video_clip.duration
+        )
+
+        final_clip = video_clip.set_audio(audio_loop)
+
+        final_clip.write_videofile(
+            final_video_path,
+            codec="libx264",
+            audio_codec="aac",
+            fps=FPS
+        )
+
+        video_clip.close()
+        audio_clip.close()
+        final_clip.close()
+
+        logger.info(f"Final video with audio created: {final_video_path}")
+
+
+        """        
         for i in range(total_frames):
             img = cv2.imread(f"{frames_out}/frame_{i:03}.png")
             height, width, layers = img.shape
             size = (width, height)
             frame_array.append(img)
-
-            
-            
+          
         
         ##Keep information displayed for 3 segoncds 
         hold_frames = FPS * 3
@@ -363,18 +520,29 @@ def main(args):
                 frame_array.append(last_frame.copy())
 
 
-        outro_img = cv2.imread(f"{frames_in}/outro.igepn.png")
+        ## Remover el outro y remplazar x un video corto
+        '''
+        outro_img = cv2.imread(f"{frames_in}/outro_qr.png")
         outro_img = cv2.resize(outro_img,(size[0],size[1]))
 
         for _ in range(FPS *2):
             frame_array.append(outro_img)
 
+        '''
+        outro_video_path = f"{frames_in}/outro_xs.mp4"
+        cap
+
+
+        ##Remover la imagen de anuncio. 
+        
+        '''
         outro_img = cv2.imread(f"{frames_in}/doc_anuncio_1.png")
         outro_img = cv2.resize(outro_img,(size[0],size[1]))
 
         for _ in range(FPS*2):
             frame_array.append(outro_img)
-
+        '''
+        
         logger.info("Create video using opencv")
         out = cv2.VideoWriter(
             f'{video_out}/{event_dict["event_id"]}.mp4',
@@ -387,6 +555,9 @@ def main(args):
             #print(frame)
             out.write(frame)
         out.release()
+
+
+        """
 
     except Exception as e:
         logger.error(f"Error while creating the combined frames / video: {e}")
