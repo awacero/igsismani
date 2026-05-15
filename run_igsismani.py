@@ -272,8 +272,9 @@ def main(args):
         # TRY DO IT IN PARALLEL 
         frame_names = []
         for t in range(0, FRAMES_NUMBER):
-            frame_data = create_initial_point_frame(event_longitude, event_latitude)
-
+            ###Quitar el punto central del evento 
+            #frame_data = create_initial_point_frame(event_longitude, event_latitude)
+            frame_data = []
             # ondas crecientes
             for color, scale in zip(colors_list, scale_list):
                 radius = t * scale
@@ -355,25 +356,55 @@ def main(args):
         blanco = (255, 255, 255)
         colors = [azul_oscuro, azul_claro, blanco]
 
+
+        # Crear fondo para la intro usando el primer frame real del mapa + info
+        map_background = Image.open(f"{frames_out}/map_000.png")
+        info_background = Image.open(f"{frames_out}/info_000.png")
+
+        if info_background.height != info_height:
+            info_background = info_background.resize(
+                (combined_width, info_height),
+                Image.LANCZOS
+            )
+
+        background_combined = Image.new(
+            "RGB",
+            (combined_width, combined_height),
+            color="white"
+        )
+
+        background_combined.paste(map_background, (0, 0))
+        background_combined.paste(info_background, (0, map_height))
+
+        map_background.close()
+        info_background.close()
+
         for i in range(total_frames):
 
             if i < FRAMES_COLUMNS:
-                # Intro de columnas: solo columnas sobre fondo blanco
-                t = i / max(FRAMES_COLUMNS - 1, 1)  # 0 -> 1
+                # Intro de columnas sobre el primer frame real del mapa + info
+                t = i / max(FRAMES_COLUMNS - 1, 1)
 
-                combined = Image.new("RGB", (combined_width, combined_height), color="white")
+                combined = background_combined.copy()
                 draw = ImageDraw.Draw(combined)
 
                 base_width = combined_width / 3.0
                 stripe_width = int(base_width * max(0.0, 1.0 - t))
 
                 current_x = 0
+
                 for color in colors:
                     if stripe_width <= 0:
                         break
+
                     x0 = int(current_x)
                     x1 = int(current_x + stripe_width)
-                    draw.rectangle([(x0, 0), (x1, combined_height)], fill=color)
+
+                    draw.rectangle(
+                        [(x0, 0), (x1, combined_height)],
+                        fill=color
+                    )
+
                     current_x = x1
 
                 combined.save(f"{frames_out}/frame_{i:03}.png")
@@ -385,11 +416,18 @@ def main(args):
                 map_img = Image.open(f"{frames_out}/map_{j:03}.png")
                 info_img = Image.open(f"{frames_out}/info_{j:03}.png")
 
-                # asegurar que info tenga la altura EXACTA esperada
                 if info_img.height != info_height:
-                    info_img = info_img.resize((combined_width, info_height),Image.LANCZOS)
+                    info_img = info_img.resize(
+                        (combined_width, info_height),
+                        Image.LANCZOS
+                    )
 
-                combined = Image.new("RGB", (combined_width, combined_height), color="white")
+                combined = Image.new(
+                    "RGB",
+                    (combined_width, combined_height),
+                    color="white"
+                )
+
                 combined.paste(map_img, (0, 0))
                 combined.paste(info_img, (0, map_height))
 
@@ -397,7 +435,6 @@ def main(args):
 
                 map_img.close()
                 info_img.close()
-
         # 4. Crear el video final a partir de los frames combinados
         logger.info("Create video from frames_combined")
         logger.info("Fusion columns intro + map + info")
