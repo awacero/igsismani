@@ -356,7 +356,7 @@ def main(args):
         blanco = (255, 255, 255)
         colors = [azul_oscuro, azul_claro, blanco]
 
-
+        '''
         # Crear fondo para la intro usando el primer frame real del mapa + info
         map_background = Image.open(f"{frames_out}/map_000.png")
         info_background = Image.open(f"{frames_out}/info_000.png")
@@ -379,42 +379,87 @@ def main(args):
         map_background.close()
         info_background.close()
 
+        '''
         for i in range(total_frames):
 
             if i < FRAMES_COLUMNS:
                 # Intro de columnas sobre el primer frame real del mapa + info
                 t = i / max(FRAMES_COLUMNS - 1, 1)
 
-                combined = background_combined.copy()
-                draw = ImageDraw.Draw(combined)
+                #combined = background_combined.copy().convert("RGBA")
+
+                # Usar frames dinámicos durante la intro:
+                # mapa fijo en map_000, pero info avanza con la animación
+                info_index = min(i, FRAMES_NUMBER - 1)
+
+                map_background = Image.open(f"{frames_out}/map_000.png")
+                info_background = Image.open(f"{frames_out}/info_{info_index:03}.png")
+
+                if info_background.height != info_height:
+                    info_background = info_background.resize(
+                        (combined_width, info_height),
+                        Image.LANCZOS
+                    )
+
+                combined_rgb = Image.new(
+                    "RGB",
+                    (combined_width, combined_height),
+                    color="white"
+                )
+
+                combined_rgb.paste(map_background, (0, 0))
+                combined_rgb.paste(info_background, (0, map_height))
+
+                map_background.close()
+                info_background.close()
+
+                combined = combined_rgb.convert("RGBA")
+
 
                 base_width = combined_width / 3.0
                 stripe_width = int(base_width * max(0.0, 1.0 - t))
 
+                # Opacidad: 255 al inicio, 0 al final
+                alpha = int(255 * max(0.0, 1.0 - t))
+
+                overlay = Image.new(
+                    "RGBA",
+                    (combined_width, combined_height),
+                    (255, 255, 255, 0)
+                )
+
+                draw = ImageDraw.Draw(overlay)
+
                 current_x = 0
 
                 for color in colors:
-                    if stripe_width <= 0:
+                    if stripe_width <= 0 or alpha <= 0:
                         break
 
                     x0 = int(current_x)
                     x1 = int(current_x + stripe_width)
 
+                    r, g, b = color
+
                     draw.rectangle(
                         [(x0, 0), (x1, combined_height)],
-                        fill=color
+                        fill=(r, g, b, alpha)
                     )
 
                     current_x = x1
 
+                combined = Image.alpha_composite(combined, overlay).convert("RGB")
                 combined.save(f"{frames_out}/frame_{i:03}.png")
 
             else:
                 # Fase de mapa + info como antes
                 j = i - FRAMES_COLUMNS
 
+                info_index = min(i,FRAMES_NUMBER -1)
+
+
                 map_img = Image.open(f"{frames_out}/map_{j:03}.png")
-                info_img = Image.open(f"{frames_out}/info_{j:03}.png")
+                info_img = Image.open(f"{frames_out}/info_{info_index:03}.png")
 
                 if info_img.height != info_height:
                     info_img = info_img.resize(

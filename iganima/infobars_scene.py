@@ -98,7 +98,7 @@ class InfoBarsScene(Scene):
         for i in range(N):
             for idx, bar in enumerate(bars):
                 if animate_masks[idx]:
-                    w = 0.1 + (target_widths[idx] - 0.1) * (i + 1) / N
+                    w = 2.0 + (target_widths[idx] - 0.1) * (i + 1) / N
                 else:
                     w = target_widths[idx]
 
