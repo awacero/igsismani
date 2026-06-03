@@ -300,7 +300,7 @@ def start_video_job(
                     "--event_id",
                     str(event_id),
                 ]
-                logging.info("###Start video creation ")
+                logging.info(f"Start video creation using {cmd}")
                 with stdout_path.open("w", encoding="utf-8") as out, stderr_path.open("w", encoding="utf-8") as err:
                     proc = subprocess.Popen(
                         cmd,

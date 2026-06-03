@@ -11,15 +11,12 @@ from pathlib import Path
 
 from iganima import iganima_utils as u
 from iganima.iganima_functions import *
-from iganima import get_circle_color
 
 import json
 from obspy import read_inventory
 import requests
 from PIL import Image, ImageDraw
 import cv2
-from manim import config
-import shutil
 
 from moviepy.editor import VideoFileClip, AudioFileClip, afx
 
@@ -318,7 +315,17 @@ def main(args):
         logger.info("Create info frames")
         from iganima.infobars_scene import InfoBarsScene
 
-        scene = InfoBarsScene(event_dict, output_dir=frames_out, n_frames=FRAMES_NUMBER, input_dir=frames_in)
+        #scene = InfoBarsScene(event_dict, output_dir=frames_out, n_frames=FRAMES_NUMBER, input_dir=frames_in)
+        scene = InfoBarsScene(
+        event_dict,
+        output_dir=frames_out,
+        n_frames=FRAMES_NUMBER,
+        input_dir=frames_in,
+        pixel_width=INFOBARS_PIXEL_WIDTH,
+        pixel_height=INFOBARS_PIXEL_HEIGHT,
+        frame_width=INFOBARS_FRAME_WIDTH,
+        frame_height=INFOBARS_FRAME_HEIGHT,
+    )
         scene.generate_frames()
 
     except Exception as e:
@@ -660,10 +667,11 @@ if __name__ == "__main__":
     args = parser.parse_args()
     print("OK:", args)
 
-    # Configuración de Manim para las escenas internas (InfoBarsScene, etc.)
-    config.pixel_width = 720
-    config.pixel_height = 444
-    config.frame_width = 14.0
-    config.frame_height = 8.0
+    # Configuración para las escenas internas (InfoBarsScene, etc.)
+
+    INFOBARS_PIXEL_WIDTH = 720
+    INFOBARS_PIXEL_HEIGHT = 444
+    INFOBARS_FRAME_WIDTH = 14.0
+    INFOBARS_FRAME_HEIGHT = 8.0
 
     main(args)
