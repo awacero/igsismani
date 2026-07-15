@@ -123,164 +123,9 @@ def configure_logging():
     return logger
 
 
-def main(args):
 
-
-##LECTURA DE CONFIGURACIÓN 
-    try:
-        configuration_file = args.iganima_config
-        event_id = args.event_id
-    except Exception as e:
-        logger.error(f"Error charging parameters from args: {e}")
-        raise Exception(f"Error charging parameters from args: {e}")
-
-    try:
-        logger.info(f"Check if configuration file {configuration_file} exists")
-        if os.path.isfile(configuration_file):
-            logger.info(f"Config file: {configuration_file} OK.Continue")
-    except Exception as e:
-        logger.error(f"Error reading configuration  file: {e}")
-        raise Exception(f"Error reading configuration file: {e}")
-
-    try:
-        logger.info(f"Read configuration file {configuration_file}")
-        run_param = read_parameters(configuration_file)
-
-        print(run_param)
-    except Exception as e:
-        logger.error(f"Error reading configuration sets in file: {e}")
-        raise Exception(f"Error reading configuration file: {e}")
-
-    try:
-        logger.info(f"Loaded configuration file {configuration_file}")
-        
-        fdsn_id = run_param['fdsn']['server_id']
-        mseed_server_config_file = run_param['fdsn']['server_config_file']
-        xml_inventory_file = run_param['fdsn']['xml_inventory_file']
-
-        nearest_url = run_param['fdsn']['nearest_url']
-        nearest_token = run_param['fdsn']['nearest_token']
-
-        mapbox_access_token = run_param["animation"]["mapbox_access_token"]
-        FRAMES_NUMBER = int(run_param["animation"]["frames_number"])
-        FPS = int(run_param["animation"]["fps"])
-        number_stations = run_param["animation"]["number_stations"]
-        frames_out = run_param["animation"]["frames_out"]
-        frames_in = run_param["animation"]["frames_in"]
-        video_out = run_param["animation"]["video_out"]
-
-        # Nuevo: número de frames para la intro de columnas (opción A).
-        # Si no está definido en el ini, se toma ~1/3 del total, mínimo 5.
-        FRAMES_COLUMNS = int(
-            run_param["animation"].get("frames_columns",
-                                       max(5, FRAMES_NUMBER // 3))
-        )
-
-    except Exception as e:
-        logger.error(f"Error loading configuration sets in file: {e}")
-        raise Exception(f"Error loading configuration file: {e}")
-
-    try:
-        logger.info(f"Read miniseed server file {mseed_server_config_file}")
-        # mseed_server_param = u.read_config_file(mseed_server_config_file)
-        mseed_server_param = load_config_from_file(mseed_server_config_file)
-        print(f"##### mseed server {mseed_server_param}")
-
-    except Exception as e:
-        logger.error(f"Error reading configuration file: {e}")
-        raise Exception(f"Error reading configuration file: {e}")
-
-    try:
-        logger.info(f"Get fdsn server info ")
-        fdsn_server_ip = mseed_server_param[fdsn_id]["server_ip"]
-        fdsn_server_port = mseed_server_param[fdsn_id]["port"]
-
-    except Exception as e:
-        logger.error(f"Error reading miniseed server file: {e}")
-        raise Exception(f"Error reading miniseed server file: {e}")
-
-
-
-
-
-##CONNECT TO FDSN 
-
-
-    try:
-        logger.info(f"Connect to fdsn server info ")
-        fdsn_client = u.connect_fdsn(fdsn_server_ip, fdsn_server_port)
-    except Exception as e:
-        logger.error(f"Error connecting configuration file: {e}")
-        raise Exception(f"Error connecting configuration file: {e}")
-
-### cLEAN FRAME DIRECTORY 
-    try:
-        logger.info(f"Clean frame directory")
-        clean_frames_directory(frames_out)
-    except Exception as e:
-        logger.error(f"Error in cleaning frame directory: {e}")
-        raise Exception(f"Error in cleaning frame directory: {e}")
-    
-### GET EVENT INFO FROM FDSN 
-    try:
-        logger.info(f"Get event info")
-        # Conexión y obtención de datos del evento
-        event_inventory = u.get_event_by_id(fdsn_client, event_id)
-        event_dict = u.event2dict(event_inventory[0])
-
-        # Información del evento para la anotación
-        event_annotation = (
-            f"ID: {event_dict['event_id']} {event_dict['status']}<br>"
-            f"{event_dict['time_local']} Hora Local<br>"
-            f"Prof. {event_dict['depth']} Km.  Magnitud:  {event_dict['magnitude']}"
-        )
-
-        # Parámetros del evento
-        event_latitude = event_dict['latitude']
-        event_longitude = event_dict['longitude']
-        logger.info("Get event info completed")
-        print(event_dict)
-
-
-
-
-    except Exception as e:
-        logger.error(f"Error getting event info {e}")
-        raise Exception(f"Error getting event info: {e}")
-
-    runtime = {"fdsn_client":fdsn_client,"frames_out":frames_out,
-            "frames_in":frames_in, "video_out":video_out, "fps":FPS,
-            "frames_number":FRAMES_NUMBER, "frames_columns":FRAMES_COLUMNS,
-            "mapbox_access_token":mapbox_access_token, "nearest_url":nearest_url, 
-            "nearest_token":nearest_token
-            }
-
-    event = {"data":event_dict, "annotation":event_annotation,
-                    "latitude":event_latitude,"longitude":event_longitude}
-
-    try:
-        parameters = {
-            "lat": event_latitude,
-            "lon": event_longitude,
-            "token": nearest_token,
-        }
-
-        response = requests.get(f"{nearest_url}", params=parameters)
-        response.raise_for_status()
-        event_dict['distance'], event_dict['city'], event_dict['province'] = eval(response.text.strip()        )
-
-        event_dict['distance'] = round(event_dict['distance'], 1)
-
-    except Exception as e:
-        logger.error(f"Error getting event nearest {e}.Filling with emptiness")
-        event_dict['distance'] = '--'
-        event_dict['city'] = '--'
-        event_dict['province'] = '--'
-
-
-
-
-###CREAR FRAMES DEL MAPA 
+def generate_map_frames(runtime,event):
+    ###CREAR FRAMES DEL MAPA 
     # 1. Crear frames del mapa
     try:
         logger.info(f"Create the map animation")
@@ -288,24 +133,24 @@ def main(args):
         from iganima import iganima_functions
 
         colors_list = ['red','red','red']
-        radius_list = [FRAMES_NUMBER*0.1, FRAMES_NUMBER*0.07, FRAMES_NUMBER*0.05]
+        radius_list = [runtime["frames_number"]*0.1, runtime["frames_number"]*0.07, runtime["frames_number"]*0.05]
         scale_list = [0.1, 0.07, 0.05]
         circle_zip = zip(colors_list,radius_list)
 
         for color,radius in circle_zip:
-            lat_circle,lon_circle = generate_circle(event_latitude,event_longitude, radius)
+            lat_circle,lon_circle = generate_circle(event["latitude"],event["longitude"], radius)
             
 
         # TRY DO IT IN PARALLEL 
         frame_names = []
-        for t in range(0, FRAMES_NUMBER):
+        for t in range(0, runtime["frames_number"]):
             ###Quitar el punto central del evento 
-            #frame_data = create_initial_point_frame(event_longitude, event_latitude)
+            #frame_data = create_initial_point_frame(event["longitude"], event["latitude"])
             frame_data = []
             # ondas crecientes
             for color, scale in zip(colors_list, scale_list):
                 radius = t * scale
-                lat_circ, lon_circ = generate_circle(event_latitude, event_longitude, radius)
+                lat_circ, lon_circ = generate_circle(event["latitude"], event["longitude"], radius)
 
                 frame_data.append(
                     go.Scattermapbox(
@@ -319,19 +164,19 @@ def main(args):
 
   
             # Guardar el frame
-            frame_name = f'{frames_out}/map_{t:03}.png'
+            frame_name = f"{runtime['frames_out']}/map_{t:03}.png"
             frame_names.append(frame_name)
             fig = go.Figure(data=frame_data)
             zoom_start = 4.5
             zoom_end = 9.5
-            zoom_level = zoom_start + (zoom_end - zoom_start) * (t / FRAMES_NUMBER)
+            zoom_level = zoom_start + (zoom_end - zoom_start) * (t / runtime["frames_number"])
             save_frame(
                 fig,
                 frame_name,
-                mapbox_access_token,
-                event_latitude,
-                event_longitude,
-                event_annotation,
+                runtime["mapbox_access_token"],
+                event["latitude"],
+                event["longitude"],
+                event["annotation"],
                 zoom_level,
             )
 
@@ -345,7 +190,7 @@ def main(args):
         logger.info("Create info frames")
         from iganima.infobars_scene import InfoBarsScene
 
-        scene = InfoBarsScene(event_dict, output_dir=frames_out, n_frames=FRAMES_NUMBER, input_dir=frames_in)
+        scene = InfoBarsScene(event["data"], output_dir=runtime['frames_out'], n_frames=runtime["frames_number"], input_dir=runtime['frames_in'])
 
         scene.generate_frames()
 
@@ -356,11 +201,11 @@ def main(args):
     # 3. Combinar: intro de columnas + mapa + info, y generar video
     try:
         logger.info("Create combined frames (columns intro + map + info)")
-        os.makedirs(f"{frames_out}", exist_ok=True)
+        os.makedirs(f"{runtime['frames_out']}", exist_ok=True)
 
         # Usar el primer frame de mapa e info como referencia de tamaño
-        sample_map_path = f"{frames_out}/map_000.png"
-        sample_info_path = f"{frames_out}/info_000.png"
+        sample_map_path = f"{runtime['frames_out']}/map_000.png"
+        sample_info_path = f"{runtime['frames_out']}/info_000.png"
 
         map_sample = Image.open(sample_map_path)
         info_sample = Image.open(sample_info_path)
@@ -374,7 +219,7 @@ def main(args):
         info_sample.close()
 
         # Total de frames del video final: intro columnas + mapa+info
-        total_frames = FRAMES_COLUMNS + FRAMES_NUMBER
+        total_frames = runtime["frames_columns"] + runtime["frames_number"]
 
         # Colores de las columnas (aprox)
         azul_oscuro = (46, 95, 168)
@@ -386,8 +231,8 @@ def main(args):
 
         '''
         # Crear fondo para la intro usando el primer frame real del mapa + info
-        map_background = Image.open(f"{frames_out}/map_000.png")
-        info_background = Image.open(f"{frames_out}/info_000.png")
+        map_background = Image.open(f"{runtime['frames_out']}/map_000.png")
+        info_background = Image.open(f"{runtime['frames_out']}/info_000.png")
 
         if info_background.height != info_height:
             info_background = info_background.resize(
@@ -410,18 +255,18 @@ def main(args):
         '''
         for i in range(total_frames):
 
-            if i < FRAMES_COLUMNS:
+            if i < runtime["frames_columns"]:
                 # Intro de columnas sobre el primer frame real del mapa + info
-                t = i / max(FRAMES_COLUMNS - 1, 1)
+                t = i / max(runtime["frames_columns"] - 1, 1)
 
                 #combined = background_combined.copy().convert("RGBA")
 
                 # Usar frames dinámicos durante la intro:
                 # mapa fijo en map_000, pero info avanza con la animación
-                info_index = min(i, FRAMES_NUMBER - 1)
+                info_index = min(i, runtime["frames_number"] - 1)
 
-                map_background = Image.open(f"{frames_out}/map_000.png")
-                info_background = Image.open(f"{frames_out}/info_{info_index:03}.png")
+                map_background = Image.open(f"{runtime['frames_out']}/map_000.png")
+                info_background = Image.open(f"{runtime['frames_out']}/info_{info_index:03}.png")
 
                 if info_background.height != info_height:
                     info_background = info_background.resize(
@@ -477,17 +322,17 @@ def main(args):
                     current_x = x1
 
                 combined = Image.alpha_composite(combined, overlay).convert("RGB")
-                combined.save(f"{frames_out}/frame_{i:03}.png")
+                combined.save(f"{runtime['frames_out']}/frame_{i:03}.png")
 
             else:
                 # Fase de mapa + info como antes
-                j = i - FRAMES_COLUMNS
+                j = i - runtime["frames_columns"]
 
-                info_index = min(i,FRAMES_NUMBER -1)
+                info_index = min(i,runtime["frames_number"] -1)
 
 
-                map_img = Image.open(f"{frames_out}/map_{j:03}.png")
-                info_img = Image.open(f"{frames_out}/info_{info_index:03}.png")
+                map_img = Image.open(f"{runtime['frames_out']}/map_{j:03}.png")
+                info_img = Image.open(f"{runtime['frames_out']}/info_{info_index:03}.png")
 
                 if info_img.height != info_height:
                     info_img = info_img.resize(
@@ -504,7 +349,7 @@ def main(args):
                 combined.paste(map_img, (0, 0))
                 combined.paste(info_img, (0, map_height))
 
-                combined.save(f"{frames_out}/frame_{i:03}.png")
+                combined.save(f"{runtime['frames_out']}/frame_{i:03}.png")
 
                 map_img.close()
                 info_img.close()
@@ -517,10 +362,10 @@ def main(args):
         logger.info("Create video using opencv")
 
         # Ruta del video corto que quieres anexar
-        outro_video_path = f"{frames_in}/outro_xs.mp4"
+        outro_video_path = f"{runtime['frames_in']}/outro_xs.mp4"
 
         # Leer primer frame para obtener size
-        first_frame_path = f"{frames_out}/frame_000.png"
+        first_frame_path = f"{runtime['frames_out']}/frame_000.png"
         first_frame = cv2.imread(first_frame_path)
 
         if first_frame is None:
@@ -530,9 +375,9 @@ def main(args):
         size = (width, height)
 
         out = cv2.VideoWriter(
-            f'{video_out}/{event_dict["event_id"]}.mp4',
+            f'{runtime["video_out"]}/{event["data"]["event_id"]}.mp4',
             cv2.VideoWriter_fourcc(*'avc1'),
-            FPS,
+            runtime["fps"],
             size,
         )
 
@@ -540,7 +385,7 @@ def main(args):
         last_frame = None
 
         for i in range(total_frames):
-            frame_path = f"{frames_out}/frame_{i:03}.png"
+            frame_path = f"{runtime['frames_out']}/frame_{i:03}.png"
             img = cv2.imread(frame_path)
 
             if img is None:
@@ -551,7 +396,7 @@ def main(args):
             last_frame = img.copy()
 
         # 2. Mantener el último frame durante 3 segundos
-        hold_frames = FPS * 3
+        hold_frames = runtime["fps"] * 3
 
         if last_frame is not None:
             for _ in range(hold_frames):
@@ -559,7 +404,7 @@ def main(args):
 
         # 3. Anexar video corto al final
         outro_skip_seconds = 3
-        outro_skip_frames = int(outro_skip_seconds*FPS)
+        outro_skip_frames = int(outro_skip_seconds*runtime["fps"])
 
         cap = cv2.VideoCapture(outro_video_path)
 
@@ -584,9 +429,9 @@ def main(args):
         cap.release()
         out.release()
 
-        silent_video_path = f'{video_out}/{event_dict["event_id"]}.mp4'
-        final_video_path = f'{video_out}/{event_dict["event_id"]}_audio.mp4'
-        audio_path = f"{frames_in}/backsound.mp3"
+        silent_video_path = f'{runtime["video_out"]}/{event["data"]["event_id"]}.mp4'
+        final_video_path = f'{runtime["video_out"]}/{event["data"]["event_id"]}_audio.mp4'
+        audio_path = f"{runtime['frames_in']}/backsound.mp3"
 
         logger.info("Adding background audio using MoviePy")
 
@@ -604,7 +449,7 @@ def main(args):
             final_video_path,
             codec="libx264",
             audio_codec="aac",
-            fps=FPS
+            fps=runtime["fps"]
         )
 
         video_clip.close()
@@ -616,14 +461,14 @@ def main(args):
 
         """        
         for i in range(total_frames):
-            img = cv2.imread(f"{frames_out}/frame_{i:03}.png")
+            img = cv2.imread(f"{runtime['frames_out']}/frame_{i:03}.png")
             height, width, layers = img.shape
             size = (width, height)
             frame_array.append(img)
           
         
         ##Keep information displayed for 3 segoncds 
-        hold_frames = FPS * 3
+        hold_frames = runtime["fps"] * 3
         if frame_array:
             last_frame = frame_array[-1].copy()
             for _ in range(hold_frames):
@@ -632,32 +477,32 @@ def main(args):
 
         ## Remover el outro y remplazar x un video corto
         '''
-        outro_img = cv2.imread(f"{frames_in}/outro_qr.png")
+        outro_img = cv2.imread(f"{runtime['frames_out']}/outro_qr.png")
         outro_img = cv2.resize(outro_img,(size[0],size[1]))
 
-        for _ in range(FPS *2):
+        for _ in range(runtime["fps"] *2):
             frame_array.append(outro_img)
 
         '''
-        outro_video_path = f"{frames_in}/outro_xs.mp4"
+        outro_video_path = f"{runtime['frames_out']}/outro_xs.mp4"
         cap
 
 
         ##Remover la imagen de anuncio. 
         
         '''
-        outro_img = cv2.imread(f"{frames_in}/doc_anuncio_1.png")
+        outro_img = cv2.imread(f"{runtime['frames_out']}/doc_anuncio_1.png")
         outro_img = cv2.resize(outro_img,(size[0],size[1]))
 
-        for _ in range(FPS*2):
+        for _ in range(runtime["fps"]*2):
             frame_array.append(outro_img)
         '''
         
         logger.info("Create video using opencv")
         out = cv2.VideoWriter(
-            f'{video_out}/{event_dict["event_id"]}.mp4',
+            f'{runtime["video_out"]}/{event["data"]["event_id"]}.mp4',
             cv2.VideoWriter_fourcc(*'avc1'),
-            FPS,  # fps
+            runtime["fps"],  # fps
             size,
         )
 
@@ -672,6 +517,174 @@ def main(args):
     except Exception as e:
         logger.error(f"Error while creating the combined frames / video: {e}")
         raise Exception(f"Error while creating the combined frames / video: {e}")
+
+    #sys.exit(0)
+
+
+def load_runtime(args):
+
+
+##LECTURA DE CONFIGURACIÓN 
+    try:
+        configuration_file = args.iganima_config
+        event_id = args.event_id
+    except Exception as e:
+        logger.error(f"Error charging parameters from args: {e}")
+        raise Exception(f"Error charging parameters from args: {e}")
+
+    try:
+        logger.info(f"Check if configuration file {configuration_file} exists")
+        if os.path.isfile(configuration_file):
+            logger.info(f"Config file: {configuration_file} OK.Continue")
+    except Exception as e:
+        logger.error(f"Error reading configuration  file: {e}")
+        raise Exception(f"Error reading configuration file: {e}")
+
+    try:
+        logger.info(f"Read configuration file {configuration_file}")
+        run_param = read_parameters(configuration_file)
+
+        print(run_param)
+    except Exception as e:
+        logger.error(f"Error reading configuration sets in file: {e}")
+        raise Exception(f"Error reading configuration file: {e}")
+
+    try:
+        logger.info(f"Loaded configuration file {configuration_file}")
+        
+        fdsn_id = run_param['fdsn']['server_id']
+        mseed_server_config_file = run_param['fdsn']['server_config_file']
+        xml_inventory_file = run_param['fdsn']['xml_inventory_file']
+
+        nearest_url = run_param['fdsn']['nearest_url']
+        nearest_token = run_param['fdsn']['nearest_token']
+
+        mapbox_access_token = run_param["animation"]["mapbox_access_token"]
+        FRAMES_NUMBER = int(run_param["animation"]["frames_number"])
+        FPS = int(run_param["animation"]["fps"])
+        number_stations = run_param["animation"]["number_stations"]
+        frames_out = run_param["animation"]['frames_out']
+        frames_in = run_param["animation"]['frames_in']
+        video_out = run_param["animation"]["video_out"]
+
+        # Nuevo: número de frames para la intro de columnas (opción A).
+        # Si no está definido en el ini, se toma ~1/3 del total, mínimo 5.
+        FRAMES_COLUMNS = int(
+            run_param["animation"].get("frames_columns",
+                                       max(5, FRAMES_NUMBER // 3))
+        )
+
+    except Exception as e:
+        logger.error(f"Error loading configuration sets in file: {e}")
+        raise Exception(f"Error loading configuration file: {e}")
+
+    try:
+        logger.info(f"Read miniseed server file {mseed_server_config_file}")
+        # mseed_server_param = u.read_config_file(mseed_server_config_file)
+        mseed_server_param = load_config_from_file(mseed_server_config_file)
+
+    except Exception as e:
+        logger.error(f"Error reading configuration file: {e}")
+        raise Exception(f"Error reading configuration file: {e}")
+
+    try:
+        logger.info(f"Get fdsn server info ")
+        fdsn_server_ip = mseed_server_param[fdsn_id]["server_ip"]
+        fdsn_server_port = mseed_server_param[fdsn_id]["port"]
+
+    except Exception as e:
+        logger.error(f"Error reading miniseed server file: {e}")
+        raise Exception(f"Error reading miniseed server file: {e}")
+
+    runtime = {'event_id':event_id,'frames_out':frames_out,
+            'frames_in':frames_in, "video_out":video_out, "fps":FPS,
+            "frames_number":FRAMES_NUMBER, "frames_columns":FRAMES_COLUMNS,
+            "mapbox_access_token":mapbox_access_token, "nearest_url":nearest_url, 
+            "nearest_token":nearest_token, 'fdsn_server_ip':fdsn_server_ip,
+            'fdsn_server_port':fdsn_server_port
+            }
+
+    return runtime
+
+def load_event(runtime):
+
+    ##CONNECT TO FDSN 
+    try:
+        logger.info(f"Connect to fdsn server info ")
+        fdsn_client = u.connect_fdsn(runtime['fdsn_server_ip'], runtime['fdsn_server_port'])
+    except Exception as e:
+        logger.error(f"Error connecting configuration file: {e}")
+        raise Exception(f"Error connecting configuration file: {e}")
+
+
+    ### GET EVENT INFO FROM FDSN 
+    try:
+        logger.info(f"Get event info")
+        # Conexión y obtención de datos del evento
+        event_inventory = u.get_event_by_id(fdsn_client, runtime['event_id'])
+        event_dict = u.event2dict(event_inventory[0])
+
+        # Información del evento para la anotación
+        annotation = (
+            f"ID: {event_dict['event_id']} {event_dict['status']}<br>"
+            f"{event_dict['time_local']} Hora Local<br>"
+            f"Prof. {event_dict['depth']} Km.  Magnitud:  {event_dict['magnitude']}"
+        )
+
+        event_dict['annotation'] = annotation
+
+        # Parámetros del evento
+        latitude = event_dict['latitude']
+        longitude = event_dict['longitude']
+
+        
+        logger.info("Get event info completed")
+
+    except Exception as e:
+        logger.error(f"Error getting event info {e}")
+        raise Exception(f"Error getting event info: {e}")
+    
+    try:
+        parameters = {
+            "lat": latitude,
+            "lon": longitude,
+            "token": runtime['nearest_token'],
+        }
+
+        response = requests.get(f"{runtime['nearest_url']}", params=parameters)
+        response.raise_for_status()
+        event_dict['distance'], event_dict['city'], event_dict['province'] = eval(response.text.strip()        )
+
+        event_dict['distance'] = round(event_dict['distance'], 1)
+
+    except Exception as e:
+        logger.error(f"Error getting event nearest {e}.Filling with emptiness")
+        event_dict['distance'] = '--'
+        event_dict['city'] = '--'
+        event_dict['province'] = '--'
+
+    event_context = {"data":event_dict, "annotation":event_dict['annotation'],
+                    "latitude":event_dict['latitude'],"longitude":event_dict['longitude']}
+
+    return event_context
+
+def main(args):
+
+    runtime = load_runtime(args)
+
+    ### CLEAN FRAME DIRECTORY 
+    try:
+        logger.info(f"Clean frame directory")
+        clean_frames_directory( runtime['frames_out'])
+    except Exception as e:
+        logger.error(f"Error in cleaning frame directory: {e}")
+        raise Exception(f"Error in cleaning frame directory: {e}")
+    
+    event_context = load_event(runtime=runtime)
+
+    generate_map_frames(runtime=runtime, event=event_context)
+
+    print("####FIN DE TEST")
 
     sys.exit(0)
 
