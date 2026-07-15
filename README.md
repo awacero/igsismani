@@ -91,7 +91,7 @@ This script reproduces the original animation with the default overlay.
 ```bash
 conda activate igsismani 
 
-python run_igsismani.py --iganima_config ./config/iganima.cfg --event_id igepn2023dcsb
+python run_igsismani.py --iganima_config ./config/iganima.cfg --event_id igepn2026mamm
 ```
 
 The frames are stored in a temporary directory and the resulting MP4 videos on `video_out`
@@ -100,7 +100,7 @@ The frames are stored in a temporary directory and the resulting MP4 videos on `
 ### 2. Ejecutar el servicio 
 
 ```bash 
-conda activate igsismani
+conda activate iganima
 
 $ python run_api_service.py  
 
@@ -117,3 +117,9 @@ curl http://192.168.1.180:8000/tickets?event_id=igepn2026dzcr
 ### 3. Create the video going to the following  web 
 
 http://192.168.1.180:8000/ui
+
+
+
+## Ejecutar con uvicorn para ver la salida. 
+
+uvicorn iganima.api.main:app --host 0.0.0.0 --port 8000 --workers 1 --log-level debug 

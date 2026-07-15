@@ -17,6 +17,7 @@ from obspy import read_inventory
 import requests
 from PIL import Image, ImageDraw
 import cv2
+from manim import config
 
 from moviepy.editor import VideoFileClip, AudioFileClip, afx
 
@@ -124,6 +125,8 @@ def configure_logging():
 
 def main(args):
 
+
+##LECTURA DE CONFIGURACIÓN 
     try:
         configuration_file = args.iganima_config
         event_id = args.event_id
@@ -196,6 +199,13 @@ def main(args):
         logger.error(f"Error reading miniseed server file: {e}")
         raise Exception(f"Error reading miniseed server file: {e}")
 
+
+
+
+
+##CONNECT TO FDSN 
+
+
     try:
         logger.info(f"Connect to fdsn server info ")
         fdsn_client = u.connect_fdsn(fdsn_server_ip, fdsn_server_port)
@@ -203,6 +213,7 @@ def main(args):
         logger.error(f"Error connecting configuration file: {e}")
         raise Exception(f"Error connecting configuration file: {e}")
 
+### cLEAN FRAME DIRECTORY 
     try:
         logger.info(f"Clean frame directory")
         clean_frames_directory(frames_out)
@@ -210,6 +221,7 @@ def main(args):
         logger.error(f"Error in cleaning frame directory: {e}")
         raise Exception(f"Error in cleaning frame directory: {e}")
     
+### GET EVENT INFO FROM FDSN 
     try:
         logger.info(f"Get event info")
         # Conexión y obtención de datos del evento
@@ -228,9 +240,23 @@ def main(args):
         event_longitude = event_dict['longitude']
         logger.info("Get event info completed")
         print(event_dict)
+
+
+
+
     except Exception as e:
         logger.error(f"Error getting event info {e}")
         raise Exception(f"Error getting event info: {e}")
+
+    runtime = {"fdsn_client":fdsn_client,"frames_out":frames_out,
+            "frames_in":frames_in, "video_out":video_out, "fps":FPS,
+            "frames_number":FRAMES_NUMBER, "frames_columns":FRAMES_COLUMNS,
+            "mapbox_access_token":mapbox_access_token, "nearest_url":nearest_url, 
+            "nearest_token":nearest_token
+            }
+
+    event = {"data":event_dict, "annotation":event_annotation,
+                    "latitude":event_latitude,"longitude":event_longitude}
 
     try:
         parameters = {
@@ -251,6 +277,10 @@ def main(args):
         event_dict['city'] = '--'
         event_dict['province'] = '--'
 
+
+
+
+###CREAR FRAMES DEL MAPA 
     # 1. Crear frames del mapa
     try:
         logger.info(f"Create the map animation")
@@ -315,17 +345,8 @@ def main(args):
         logger.info("Create info frames")
         from iganima.infobars_scene import InfoBarsScene
 
-        #scene = InfoBarsScene(event_dict, output_dir=frames_out, n_frames=FRAMES_NUMBER, input_dir=frames_in)
-        scene = InfoBarsScene(
-        event_dict,
-        output_dir=frames_out,
-        n_frames=FRAMES_NUMBER,
-        input_dir=frames_in,
-        pixel_width=INFOBARS_PIXEL_WIDTH,
-        pixel_height=INFOBARS_PIXEL_HEIGHT,
-        frame_width=INFOBARS_FRAME_WIDTH,
-        frame_height=INFOBARS_FRAME_HEIGHT,
-    )
+        scene = InfoBarsScene(event_dict, output_dir=frames_out, n_frames=FRAMES_NUMBER, input_dir=frames_in)
+
         scene.generate_frames()
 
     except Exception as e:
@@ -667,11 +688,10 @@ if __name__ == "__main__":
     args = parser.parse_args()
     print("OK:", args)
 
-    # Configuración para las escenas internas (InfoBarsScene, etc.)
-
-    INFOBARS_PIXEL_WIDTH = 720
-    INFOBARS_PIXEL_HEIGHT = 444
-    INFOBARS_FRAME_WIDTH = 14.0
-    INFOBARS_FRAME_HEIGHT = 8.0
+    # Configuración de Manim para las escenas internas (InfoBarsScene, etc.)
+    config.pixel_width = 720
+    config.pixel_height = 444
+    config.frame_width = 14.0
+    config.frame_height = 8.0
 
     main(args)
