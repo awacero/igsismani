@@ -1,0 +1,27 @@
+name: iganima
+
+channels:
+  - conda-forge
+
+dependencies:
+  - python=3.9
+  - numpy=1.26.4
+  - pandas
+  - scipy
+  - obspy
+  - plotly
+  - moviepy
+  - manim
+  - mplstereonet
+  - dash
+  - opencv
+  - fastapi
+  - uvicorn
+  - python-dotenv
+  - ipython
+  - requests
+  - pyyaml
+  - pip
+
+  - pip:
+      - kaleido==0.2.1
