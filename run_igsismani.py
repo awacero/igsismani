@@ -22,7 +22,9 @@ from iganima.pipeline import generate_map_frames
 pd.set_option('display.max_colwidth', None)
 pd.set_option('display.max_columns', None)
 
+from pathlib import Path
 
+PROJECT_ROOT = Path("__file__").resolve().parent
 
 
 def read_parameters(file_path):
@@ -253,5 +255,5 @@ if __name__ == "__main__":
     config.pixel_height = 444
     config.frame_width = 14.0
     config.frame_height = 8.0
-
+    config.media_dir = PROJECT_ROOT / "tmp" / "manim"
     main(args)
