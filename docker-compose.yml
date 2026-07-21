@@ -1,0 +1,21 @@
+services:
+  igsismani-api:
+    image: igsismani:v1
+    container_name: igsismani-api
+    restart: unless-stopped
+
+    ports:
+      - "8000:8000"
+
+    working_dir: /home/wilson/proyectos_codigo/igsismani
+
+    volumes:
+      - /home/wilson/proyectos_codigo/igsismani:/home/wilson/proyectos_codigo/igsismani
+
+    environment:
+      IGSISMANI_API_HOST: "0.0.0.0"
+      IGSISMANI_API_PORT: "8000"
+      IGSISMANI_API_WORKERS: "1"
+      IGSISMANI_API_LOG_LEVEL: "info"
+
+    command: python run_api_service.py
