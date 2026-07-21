@@ -114,7 +114,6 @@ def load_runtime(args):
         FPS = int(run_param["animation"]["fps"])
         number_stations = run_param["animation"]["number_stations"]
         frames_out = run_param["animation"]['frames_out']
-        frames_in = run_param["animation"]['frames_in']
         video_out = run_param["animation"]["video_out"]
 
         # Nuevo: número de frames para la intro de columnas (opción A).
@@ -147,7 +146,7 @@ def load_runtime(args):
         raise Exception(f"Error reading miniseed server file: {e}")
 
     runtime = {'event_id':event_id,'frames_out':frames_out,
-            'frames_in':frames_in, "video_out":video_out, "fps":FPS,
+            "video_out":video_out, "fps":FPS,
             "frames_number":FRAMES_NUMBER, "frames_columns":FRAMES_COLUMNS,
             "mapbox_access_token":mapbox_access_token, "nearest_url":nearest_url, 
             "nearest_token":nearest_token, 'fdsn_server_ip':fdsn_server_ip,

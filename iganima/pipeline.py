@@ -5,7 +5,9 @@ from PIL import Image, ImageDraw
 import cv2
 from moviepy.editor import VideoFileClip, AudioFileClip, afx
 
-
+from pathlib import Path
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+RESOURCES_DIR = PROJECT_ROOT / "resources"
 
 logger = logging.getLogger(__name__)
 
@@ -132,7 +134,7 @@ def create_info_frames(runtime,event):
         logger.info("Create info frames")
         from iganima.infobars_scene import InfoBarsScene
 
-        scene = InfoBarsScene(event["data"], output_dir=runtime['frames_out'], n_frames=runtime["frames_number"], input_dir=runtime['frames_in'])
+        scene = InfoBarsScene(event["data"], output_dir=runtime['frames_out'], n_frames=runtime["frames_number"])
 
         scene.generate_frames()
 
@@ -291,8 +293,7 @@ def create_video(runtime,event):
         logger.info("Create video using opencv")
 
         # Ruta del video corto que quieres anexar
-        outro_video_path = f"{runtime['frames_in']}/outro_xs.mp4"
-
+        outro_video_path = RESOURCES_DIR / "outro_xs.mp4"
         # Leer primer frame para obtener size
         first_frame_path = f"{runtime['frames_out']}/frame_000.png"
         first_frame = cv2.imread(first_frame_path)
@@ -360,12 +361,11 @@ def create_video(runtime,event):
 
         silent_video_path = f'{runtime["video_out"]}/{event["data"]["event_id"]}.mp4'
         final_video_path = f'{runtime["video_out"]}/{event["data"]["event_id"]}_audio.mp4'
-        audio_path = f"{runtime['frames_in']}/backsound.mp3"
-
+        audio_path = RESOURCES_DIR / "backsound.mp3"
         logger.info("Adding background audio using MoviePy")
 
         video_clip = VideoFileClip(silent_video_path)
-        audio_clip = AudioFileClip(audio_path)
+        audio_clip = AudioFileClip(str(audio_path))
 
         audio_loop = afx.audio_loop(
             audio_clip,

@@ -2,6 +2,9 @@ from manim import *
 from PIL import Image
 import os
 
+from pathlib import Path
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+RESOURCES_DIR = PROJECT_ROOT / "resources"
 
 class InfoBarsScene(Scene):
     """
@@ -9,14 +12,12 @@ class InfoBarsScene(Scene):
     usando Manim. Guarda los frames como imágenes PNG.
     """
 
-    def __init__(self, event_info, output_dir="frames_out", n_frames=20, input_dir="frames_in", **kwargs):
+    def __init__(self, event_info, output_dir="frames_out", n_frames=20, **kwargs):
         super().__init__(**kwargs)
         self.event_info = event_info
         self.output_dir = output_dir
         self.n_frames = n_frames
-        self.input_dir = input_dir
         os.makedirs(output_dir, exist_ok=True)
-        os.makedirs(input_dir, exist_ok=True)
 
 
     def make_bar_large(self, height, color, text_str, font_size):
@@ -64,7 +65,7 @@ class InfoBarsScene(Scene):
             stroke_width=0
         )
         """         
-        background = ImageMobject(f"{self.input_dir}/background.jpeg")
+        background = ImageMobject(str(RESOURCES_DIR/ "background.jpeg"))
 
         scale_w = config.frame_width / background.width
         scale_h = config.frame_height / background.height

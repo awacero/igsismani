@@ -29,6 +29,19 @@ The following sections describe how to install, configure and execute the code.
     conda install manim plotly opencv obspy 
    ```
 
+## Instalación
+
+```bash
+git clone ...
+cd igsismani
+
+cp .env.example .env
+
+conda env create -f environment.yml
+conda activate igsismani
+```
+
+Luego edite el archivo `.env` según su entorno.
 
 ## Configuration
 
