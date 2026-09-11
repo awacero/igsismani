@@ -2,7 +2,7 @@
 
 This repository contains utilities for generating seismic information animations. 
 
-![event_image](docs/2026-09-11_14-04.png)
+![event_image](docs/2026-09-11_14-11.png)
 
 ### Youtube video
 
