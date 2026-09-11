@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import os
+import sys
 import re
 import secrets
 import shutil
@@ -293,7 +294,7 @@ def start_video_job(
                 timeout_s = int(os.environ.get("IGSISMANI_JOB_TIMEOUT_SECONDS", "7200"))
 
                 cmd = [
-                    "python",
+                    sys.executable,
                     str(script),
                     "--iganima_config",
                     str(config_path),
