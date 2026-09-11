@@ -4,6 +4,10 @@ This repository contains utilities for generating seismic information animations
 
 ![event_image](docs/2026-09-11_14-04.png)
 
+### Youtube video
+
+[![Ver video en YouTube](https://img.youtube.com/vi/wF_gAaO33XI/maxresdefault.jpg)](https://www.youtube.com/watch?v=wF_gAaO33XI)
+
 The following sections describe how to install, configure and execute the code. 
 
 ## Prerequisites
