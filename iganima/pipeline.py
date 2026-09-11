@@ -6,6 +6,9 @@ import cv2
 from moviepy.editor import VideoFileClip, AudioFileClip, afx
 
 from pathlib import Path
+
+import plotly.graph_objects as go 
+
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 RESOURCES_DIR = PROJECT_ROOT / "resources"
 
@@ -142,6 +145,75 @@ def create_info_frames(runtime,event):
         logger.error(f"Error while creating the info frames: {e}")
         raise Exception(f"Error while creating the info frames: {e}")
 
+
+
+def create_globe_frame(runtime, event):
+    """
+    Create a static orthographic globe centered on the earthquake.
+    """
+
+    try:
+        logger.info("Create static globe")
+
+        globe_path = f"{runtime['frames_out']}/globe.png"
+
+        fig = go.Figure()
+
+        # Globe
+        fig.add_trace(
+            go.Scattergeo(
+                lon=[event["longitude"]],
+                lat=[event["latitude"]],
+                mode="markers",
+                marker=dict(
+                    size=10,
+                    color="red",
+                    line=dict(width=1, color="white"),
+                ),
+                showlegend=False,
+            )
+        )
+
+        fig.update_geos(
+            projection_type="orthographic",
+            projection_rotation=dict(
+                lon=event["longitude"],
+                lat=event["latitude"],
+            ),
+            showland=True,
+            landcolor="lightgray",
+            showocean=True,
+            oceancolor="rgb(150, 190, 220)",
+            showcountries=True,
+            countrycolor="black",
+            coastlinecolor="black",
+            showlakes=True,
+            lakecolor="rgb(150, 190, 220)",
+            bgcolor="rgba(0,0,0,0)",
+        )
+
+        fig.update_layout(
+            width=180,
+            height=180,
+            margin=dict(l=0, r=0, t=0, b=0),
+            paper_bgcolor="rgba(0,0,0,0)",
+            plot_bgcolor="rgba(0,0,0,0)",
+        )
+
+        fig.write_image(
+            globe_path,
+            width=180,
+            height=180,
+            scale=1,
+        )
+
+        logger.info(f"Static globe created: {globe_path}")
+
+    except Exception as e:
+        logger.error(f"Error while creating globe: {e}")
+        raise Exception(f"Error while creating globe: {e}")
+
+
 def create_combined_frames(runtime,event):
 
 
@@ -258,6 +330,11 @@ def create_combined_frames(runtime,event):
                 map_img = Image.open(f"{runtime['frames_out']}/map_{j:03}.png")
                 info_img = Image.open(f"{runtime['frames_out']}/info_{info_index:03}.png")
 
+                globe_img = Image.open(
+                    f"{runtime['frames_out']}/globe.png"
+                ).convert("RGBA")
+
+
                 if info_img.height != info_height:
                     info_img = info_img.resize(
                         (combined_width, info_height),
@@ -272,6 +349,16 @@ def create_combined_frames(runtime,event):
 
                 combined.paste(map_img, (0, 0))
                 combined.paste(info_img, (0, map_height))
+
+                #globe_x = combined_width - globe_img.width - 15
+                globe_x = 15
+                globe_y = map_height - globe_img.height - 15
+
+                combined.paste(
+                    globe_img,
+                    (globe_x, globe_y),
+                    globe_img
+                )
 
                 combined.save(f"{runtime['frames_out']}/frame_{i:03}.png")
 
@@ -399,6 +486,9 @@ def generate_map_frames(runtime,event):
     create_map_frames( runtime=runtime,event=event)
 
     create_info_frames(runtime=runtime, event=event)
+
+    create_globe_frame(runtime=runtime, event=event)
+
 
     create_combined_frames(runtime=runtime, event=event)
 
