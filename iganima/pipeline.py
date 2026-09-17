@@ -147,6 +147,100 @@ def create_info_frames(runtime,event):
 
 
 
+def create_globe_frames(runtime, event):
+
+    try:
+        logger.info("Create rotating globe")
+
+        number_frames = 40
+
+        for i in range(number_frames):
+
+            globe_path = (
+                f"{runtime['frames_out']}/globe_{i:03}.png"
+            )
+
+            # Comenzamos 180° alejados del epicentro
+            # y terminamos exactamente sobre él.
+            start_lon = event["longitude"] - 180
+            end_lon = event["longitude"]
+
+            rotation_lon = (
+                start_lon
+                + (end_lon - start_lon) * i / (number_frames - 1)
+            )
+
+            fig = go.Figure()
+
+            fig.add_trace(
+                go.Scattergeo(
+                    lon=[event["longitude"]],
+                    lat=[event["latitude"]],
+                    mode="markers",
+                    marker=dict(
+                        size=10,
+                        color="red",
+                        line=dict(width=1, color="white"),
+                    ),
+                    showlegend=False,
+                )
+            )
+
+            fig.update_geos(
+                projection_type="orthographic",
+
+                projection_rotation=dict(
+                    lon=rotation_lon,
+                    lat=event["latitude"],
+                ),
+
+                projection_scale=0.9,
+
+                showland=True,
+                landcolor="lightgray",
+
+                showocean=True,
+                oceancolor="rgb(150, 190, 220)",
+
+                showcountries=True,
+                countrycolor="white",
+
+                coastlinecolor="white",
+
+                showlakes=True,
+                lakecolor="rgb(150, 190, 220)",
+
+                bgcolor="rgba(0,0,0,0)",
+            )
+
+            fig.update_layout(
+                width=220,
+                height=220,
+                margin=dict(l=0, r=0, t=0, b=0),
+                paper_bgcolor="rgba(0,0,0,0)",
+                plot_bgcolor="rgba(0,0,0,0)",
+            )
+
+            fig.write_image(
+                globe_path,
+                width=220,
+                height=220,
+                scale=1,
+            )
+
+        logger.info(
+            f"Created {number_frames} rotating globe frames"
+        )
+
+    except Exception as e:
+        logger.error(
+            f"Error while creating globe frames: {e}"
+        )
+        raise Exception(
+            f"Error while creating globe frames: {e}"
+        )
+
+
 def create_globe_frame(runtime, event):
     """
     Create a static orthographic globe centered on the earthquake.
@@ -330,10 +424,14 @@ def create_combined_frames(runtime,event):
                 map_img = Image.open(f"{runtime['frames_out']}/map_{j:03}.png")
                 info_img = Image.open(f"{runtime['frames_out']}/info_{info_index:03}.png")
 
-                globe_img = Image.open(
-                    f"{runtime['frames_out']}/globe.png"
-                ).convert("RGBA")
+                
+                #globe_img = Image.open(f"{runtime['frames_out']}/globe.png").convert("RGBA")
+                
+                globe_index = min(j, 39)
 
+                globe_img = Image.open(
+                    f"{runtime['frames_out']}/globe_{globe_index:03}.png"
+                ).convert("RGBA")
 
                 if info_img.height != info_height:
                     info_img = info_img.resize(
@@ -487,8 +585,8 @@ def generate_map_frames(runtime,event):
 
     create_info_frames(runtime=runtime, event=event)
 
-    create_globe_frame(runtime=runtime, event=event)
-
+    #create_globe_frame(runtime=runtime, event=event)
+    create_globe_frames(runtime=runtime, event=event)
 
     create_combined_frames(runtime=runtime, event=event)
 
