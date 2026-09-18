@@ -11,7 +11,7 @@ on:
 jobs:
   test:
 
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
 
     steps:
 
@@ -24,6 +24,12 @@ jobs:
           activate-environment: igsismani
           environment-file: environment.yml
           auto-activate-base: false
+          
+      - name: Check runner
+        run: |
+          hostname
+          whoami
+          pwd
 
       - name: Run tests
         shell: bash -el {0}
