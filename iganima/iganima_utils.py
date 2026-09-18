@@ -44,8 +44,10 @@ def get_event_by_id(fdsn_client,event_id):
     """
     
     try:
-        return fdsn_client.get_events(eventid=event_id,includearrivals=True,includeallorigins=False,includecomments=True)
+        #return fdsn_client.get_events(eventid=event_id,includearrivals=True,includeallorigins=False,includecomments=True)
+        return fdsn_client.get_events(eventid=event_id,includearrivals=True,includeallorigins=False,)
         
+
     except Exception as e:
         raise Exception("Error in get_events_by_station_location: %s" %str(e))
 
@@ -366,8 +368,14 @@ def event2dict(event_object):
     event_d['depth'] = round(origin.depth/1000,1)
     event_d['datetime'] = origin.time.datetime 
     event_d["author"] = origin.creation_info.author
-    event_d["event_id"] = event_object.resource_id.id.split("/")[2]
 
+    #event_d["event_id"] = event_object.resource_id.id.split("/")[2]
+    resource_id = event_object.resource_id.id
+    event_id = resource_id.split("/")[-1]
+
+    if "=" in event_id:
+        event_id = event_id.split("=")[-1]
+    event_d["event_id"] = event_id
 
     try:
         event_d["status"] = origin.evaluation_status

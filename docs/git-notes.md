@@ -4,7 +4,7 @@
 
 $ git status
 
-$ git log --oneline 3 
+$ git log --oneline -3 
 
 
 ```  bash 

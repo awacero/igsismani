@@ -1,27 +1,26 @@
 name: igsismani
-
 channels:
   - conda-forge
-
+  - https://repo.anaconda.com/pkgs/main
+  - https://repo.anaconda.com/pkgs/r
 dependencies:
-  - python=3.9
-  - numpy=1.26.4
+  - python=3.11
+  - pip
+  - obspy
+  - numpy
   - pandas
   - scipy
-  - obspy
-  - plotly
-  - moviepy
-  - manim
-  - mplstereonet
-  - dash
+  - requests
+  - pillow
   - opencv
+  - plotly
+  - manim
+  - moviepy
+  - ffmpeg
   - fastapi
   - uvicorn
-  - python-dotenv
-  - ipython
-  - requests
-  - pyyaml
-  - pip
+  - python-multipart
+  - pytz
+  - conda-pack
+  - pytest
 
-  - pip:
-      - kaleido==0.2.1
