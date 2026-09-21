@@ -5,7 +5,6 @@ channels:
   - https://repo.anaconda.com/pkgs/r
 dependencies:
   - python=3.11
-  - pip
   - obspy
   - numpy
   - pandas
@@ -13,7 +12,7 @@ dependencies:
   - requests
   - pillow
   - opencv
-  - plotly
+  - plotly=6.6
   - manim
   - moviepy
   - ffmpeg
@@ -23,4 +22,6 @@ dependencies:
   - pytz
   - conda-pack
   - pytest
-
+  - pip
+  - pip:
+    - kaleido

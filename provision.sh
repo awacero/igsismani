@@ -6,7 +6,7 @@ APP_DIR="/opt/igsismani"
 APP_USER="sistemas"
 
 echo "==> Instalando paquetes básicos..."
-sudo apt update
+###sudo apt update
 sudo apt install -y git curl
 
 echo "==> Creando directorios..."
