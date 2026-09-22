@@ -1,0 +1,18 @@
+[Unit]
+Description=IGSISMANI API
+After=network.target
+
+[Service]
+Type=simple
+User=sistemas
+Environment="PATH=/home/sistemas/miniforge3/envs/igsismani/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+Environment="APP_DIR=/home/sistemas/aplicaciones/igsismani"
+WorkingDirectory=${APP_DIR}
+EnvironmentFile=${APP_DIR}/.env
+ExecStart=/home/sistemas/miniforge3/envs/igsismani/bin/python ${APP_DIR}/run_api_service.py
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
+
